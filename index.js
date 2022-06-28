@@ -82,15 +82,13 @@ const deptQuestions = {
 
 async function addToDB(choice) {
   if (choice.includes('Employee')) {
-    console.log('get employee role list!!')
-    const employeeQuestions = await getEmployeeQuestions();
+    const employeeList = await getEmployeeList();
+    const employeeQuestions = await getEmployeeQuestions(employeeList);
     await inquirer
       .prompt(employeeQuestions)
       .then(async (res) => {
-        console.log(`ADDING ${res.choice}`);
-        // db.query(`INSERT INTO employee (first_name, last_name, role_id, manager) VALUES ?`, (res.first, res.last, roleId, res.manager), (err, results) => {
-        //   console.table(results);
-        // })
+        const roleId = await getRoleId(res.title);
+        console.log(`NEED TO ADD (${res.first}, ${res.last}, ${roleId}, ${res.manager})`);
       });
   } else if (choice.includes('Role')) {
     db.query('SELECT * FROM employee_role', function(err, results) {
@@ -107,8 +105,7 @@ async function addToDB(choice) {
   }
 }
 
-async function getEmployeeQuestions() {
-  console.log('QUERYING');
+async function getEmployeeQuestions(employeeList) {
   return new Promise(function(resolve, reject) {
     db.query('SELECT title from employee_role', function (err, results) {
       if (err) {
@@ -128,12 +125,42 @@ async function getEmployeeQuestions() {
         },
         {
           type: 'list',
-          message: 'What is the employee\'s role',
-          name: 'choice',
+          message: 'What is the employee\'s role?',
+          name: 'title',
           choices: roleList,
+        },
+        {
+          type: 'list',
+          message: 'Who is the employee\'s manager?',
+          name: 'manager',
+          choices: employeeList,
         },
       ];
       resolve(employeeQuestions);
+    })
+  });
+}
+
+async function getRoleId(roleName) {
+  return new Promise(function(resolve, reject) {
+    db.query('SELECT id FROM employee_role WHERE title = ?', roleName,  function (err, results) {
+      if (err) {
+        reject(err);
+      }
+      const roleId = results[0].id;
+      resolve(roleId);
+    })
+  });
+}
+
+async function getEmployeeList() {
+  return new Promise(function(resolve, reject) {
+    db.query('SELECT first_name, last_name FROM employee', function (err, results) {
+      if (err) {
+        reject(err);
+      }
+      const employeeList = results.map(object => object.first_name + ' ' + object.last_name);
+      resolve(employeeList);
     })
   });
 }
