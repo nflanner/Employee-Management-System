@@ -64,7 +64,7 @@ async function viewDB(choice) {
       console.table(results);
     })
   } else if (choice.includes('Roles')) {
-    db.query('SELECT * FROM employee_role', function(err, results) {
+    db.query('SELECT employee_role.id, employee_role.title, department.dept_name AS department, employee_role.salary FROM employee_role JOIN department ON employee_role.department_id = department.id', function(err, results) {
       console.table(results);
     })
   } else {
@@ -88,19 +88,39 @@ async function addToDB(choice) {
       .prompt(employeeQuestions)
       .then(async (res) => {
         const roleId = await getRoleId(res.title);
-        console.log(`NEED TO ADD (${res.first}, ${res.last}, ${roleId}, ${res.manager})`);
+        const splitManager = res.manager.split(' ');
+        const managerId = await getManagerId(splitManager[0], splitManager[1]);
+        db.query(`INSERT INTO employee (first_name, last_name, role_id, manager) VALUES (?,?,?,?)`, [res.first, res.last, roleId, managerId], (err, results) => {
+          if (err) {
+            console.log(err);
+          }
+        })
+        console.log(`${res.first} ${res.last} added to the database.`);
       });
   } else if (choice.includes('Role')) {
-    db.query('SELECT * FROM employee_role', function(err, results) {
-      console.table(results);
-    })
+    const roleQuestions = await getRoleQuestions();
+    await inquirer
+      .prompt(roleQuestions)
+      .then(async (res) => {
+        const deptId = await getDeptId(res.department)
+        // console.log(`NEED TO ADD (${res.title}, ${res.salary}, ${deptId})`)
+        db.query(`INSERT INTO employee_role (title, salary, department_id) VALUES (?,?,?)`, [res.title, res.salary, deptId], (err, results) => {
+          if (err) {
+            console.log(err);
+          }
+        })
+        console.log(`${res.role} added to the database.`);
+      })
   } else {
     await inquirer
       .prompt(deptQuestions)
       .then(async (res) => {
-        db.query(`INSERT INTO department (dept_name) VALUES ?`, res.department, (err, results) => {
-          console.table(results);
+        db.query(`INSERT INTO department (dept_name) VALUES (?)`, res.department, (err, results) => {
+          if (err) {
+            console.log(err);
+          }
         })
+        console.log(`${res.department} added to the database.`);
       });
   }
 }
@@ -141,6 +161,36 @@ async function getEmployeeQuestions(employeeList) {
   });
 }
 
+async function getRoleQuestions() {
+  return new Promise(function(resolve, reject) {
+    db.query('SELECT dept_name FROM department', function (err, results) {
+      if (err) {
+        reject(err);
+      }
+      const deptList = results.map(obj => obj.dept_name);
+      const roleQuestions = [
+        {
+          type: 'input',
+          message: 'What is the name of the role?',
+          name: 'title'
+        },
+        {
+          type: 'input',
+          message: 'What is the salary of the role?',
+          name: 'salary'
+        },
+        {
+          type: 'list',
+          message: 'Which department does the role belong to?',
+          name: 'department',
+          choices: deptList,
+        },
+      ];
+      resolve(roleQuestions);
+    })
+  });
+}
+
 async function getRoleId(roleName) {
   return new Promise(function(resolve, reject) {
     db.query('SELECT id FROM employee_role WHERE title = ?', roleName,  function (err, results) {
@@ -149,6 +199,31 @@ async function getRoleId(roleName) {
       }
       const roleId = results[0].id;
       resolve(roleId);
+    })
+  });
+}
+
+async function getDeptId(deptName) {
+  return new Promise(function(resolve, reject) {
+    db.query('SELECT id FROM department WHERE dept_name = ?', deptName,  function (err, results) {
+      if (err) {
+        reject(err);
+      }
+      const roleId = results[0].id;
+      resolve(roleId);
+    })
+  });
+}
+
+async function getManagerId(firstName, lastName) {
+  return new Promise(function(resolve, reject) {
+    db.query('SELECT id FROM employee WHERE first_name = ? AND last_name = ?', [firstName, lastName],  function (err, results) {
+      if (err) {
+        reject(err);
+      }
+      console.log(results);
+      const managerId = results[0].id;
+      resolve(managerId);
     })
   });
 }
