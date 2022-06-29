@@ -46,10 +46,8 @@ async function init() {
             await viewDB(res.choice);
           } else if (res.choice.includes('Add')) {
             await addToDB(res.choice);
-            console.log('ADD FUNCTION')
           } else {
             await updateDB();
-            console.log('UPDATE EMPLOYEE ROLE')
           }
         } else {
           console.log('Quitting!');
