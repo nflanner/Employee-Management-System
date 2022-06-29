@@ -4,11 +4,17 @@
 
 Developers frequently have to create interfaces that allow non-developers to easily view and interact with information stored in databases. These interfaces are called **content management systems (CMS)**. This project is a command-line application from built from scratch to manage a company's employee database, using Node.js, Inquirer, and MySQL.
 
-Because this application is not deployed, there a walkthrough video that demonstrates its functionality located below. 
+Because this application is not deployed, there a walkthrough video that demonstrates its functionality located below.
+
+## GitHub/Viedo Walkthrough
+
+GitHub repository [here](https://github.com/nflanner/Employee-Management-System).
+
+A video walkthrough of how to use the application can be found [here](https://drive.google.com/file/d/1Mp5iH06gF6IQnXFhvyuMNE5_fFOYt2D1/view).
 
 ## Getting Started 
 
-Clone the repo from my GitHub repository [here](https://github.com/nflanner/Employee-Management-System).
+Clone the repo from my GitHub repository.
 
 Install all package dependencies from the root directory using
 
@@ -28,8 +34,6 @@ Finally, run the CLI application from the root directory using node by running
 ```
 node index.js
 ```
-
-A video walkthrough of how to use the application can be found [here](video link).
 
 ## User Story
 
