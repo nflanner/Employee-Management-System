@@ -39,35 +39,39 @@ async function init() {
   while (quit === 0) {
     let selection = '';
     await inquirer
-    .prompt(initQuestions)
-    .then(async (res) => {
-      if (res.choice != 'Quit') {
-        if (res.choice.includes('View')) {
-          await viewDB(res.choice);
-        } else if (res.choice.includes('Add')) {
-          await addToDB(res.choice);
-          console.log('ADD FUNCTION')
+      .prompt(initQuestions)
+      .then(async (res) => {
+        if (res.choice != 'Quit') {
+          if (res.choice.includes('View')) {
+            await viewDB(res.choice);
+          } else if (res.choice.includes('Add')) {
+            await addToDB(res.choice);
+            console.log('ADD FUNCTION')
+          } else {
+            await updateDB();
+            console.log('UPDATE EMPLOYEE ROLE')
+          }
         } else {
-          console.log('UPDATE EMPLOYEE ROLE')
+          console.log('Quitting!');
+          quit = 1;
         }
-      } else {
-        console.log('Quitting!');
-        quit = 1;
-      }
-    });
+      });
   }
 }
 
 async function viewDB(choice) {
   if (choice.includes('Employees')) {
-    db.query('SELECT * FROM employee', function(err, results) {
+    console.log('\n');
+    db.query('SELECT employee_table.id, employee_table.first_name, employee_table.last_name, employee_role.title, department.dept_name AS department, employee_role.salary, manager_table.first_name AS manager FROM employee_role JOIN department ON employee_role.department_id = department.id JOIN employee AS employee_table ON employee_role.id = employee_table.role_id LEFT JOIN employee AS manager_table ON employee_table.manager = manager_table.id;', function(err, results) {
       console.table(results);
     })
   } else if (choice.includes('Roles')) {
+    console.log('\n');
     db.query('SELECT employee_role.id, employee_role.title, department.dept_name AS department, employee_role.salary FROM employee_role JOIN department ON employee_role.department_id = department.id', function(err, results) {
       console.table(results);
     })
   } else {
+    console.log('\n');
     db.query('SELECT * FROM department', function(err, results) {
       console.table(results);
     })
@@ -123,6 +127,25 @@ async function addToDB(choice) {
         console.log(`${res.department} added to the database.`);
       });
   }
+}
+
+const updateQuestions = [
+  {
+    type: 'list',
+    message: 'Which employee\'s role would you like to update?',
+    name: 'employee',
+    choices: names,
+  },
+  {
+    type: 'list',
+    message: 'Which role would you like to assign the selected employee?',
+    name: 'newRole',
+    choices: roles,
+  },
+];
+
+async function updateDB() {
+  const 
 }
 
 async function getEmployeeQuestions(employeeList) {
