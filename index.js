@@ -34,6 +34,12 @@ const initQuestions = [
   },
 ];
 
+const deptQuestions = {
+  type: 'input',
+  message: 'What is the department name?',
+  name: 'department',
+}
+
 async function init() {
   let quit = 0;
   while (quit === 0) {
@@ -59,27 +65,48 @@ async function init() {
 
 async function viewDB(choice) {
   if (choice.includes('Employees')) {
-    console.log('\n');
-    db.query('SELECT employee_table.id, employee_table.first_name, employee_table.last_name, employee_role.title, department.dept_name AS department, employee_role.salary, manager_table.first_name AS manager FROM employee_role JOIN department ON employee_role.department_id = department.id JOIN employee AS employee_table ON employee_role.id = employee_table.role_id LEFT JOIN employee AS manager_table ON employee_table.manager = manager_table.id;', function(err, results) {
-      console.table(results);
-    })
+    await viewEmployees();
   } else if (choice.includes('Roles')) {
-    console.log('\n');
-    db.query('SELECT employee_role.id, employee_role.title, department.dept_name AS department, employee_role.salary FROM employee_role JOIN department ON employee_role.department_id = department.id', function(err, results) {
-      console.table(results);
-    })
+    await viewRoles();
   } else {
-    console.log('\n');
-    db.query('SELECT * FROM department', function(err, results) {
-      console.table(results);
-    })
+    await viewDepartments();
   }
 }
 
-const deptQuestions = {
-  type: 'input',
-  message: 'What is the department name?',
-  name: 'department',
+async function viewEmployees() {
+  return new Promise(function(resolve, reject) {
+    db.query('SELECT employee_table.id, employee_table.first_name, employee_table.last_name, employee_role.title, department.dept_name AS department, employee_role.salary, manager_table.first_name AS manager FROM employee_role JOIN department ON employee_role.department_id = department.id JOIN employee AS employee_table ON employee_role.id = employee_table.role_id LEFT JOIN employee AS manager_table ON employee_table.manager = manager_table.id;', function(err, results) {
+      if (err) {
+        reject(err)
+      }
+      console.table(results);
+      resolve();
+    })
+  })
+}
+
+async function viewRoles() {
+  return new Promise(function(resolve, reject) {
+    db.query('SELECT employee_role.id, employee_role.title, department.dept_name AS department, employee_role.salary FROM employee_role JOIN department ON employee_role.department_id = department.id;', function(err, results) {
+      if (err) {
+        reject(err)
+      }
+      console.table(results);
+      resolve();
+    })
+  })
+}
+
+async function viewDepartments() {
+  return new Promise(function(resolve, reject) {
+    db.query('SELECT * FROM department;', function(err, results) {
+      if (err) {
+        reject(err)
+      }
+      console.table(results);
+      resolve();
+    })
+  })
 }
 
 async function addToDB(choice) {
@@ -105,7 +132,6 @@ async function addToDB(choice) {
       .prompt(roleQuestions)
       .then(async (res) => {
         const deptId = await getDeptId(res.department)
-        // console.log(`NEED TO ADD (${res.title}, ${res.salary}, ${deptId})`)
         db.query(`INSERT INTO employee_role (title, salary, department_id) VALUES (?,?,?)`, [res.title, res.salary, deptId], (err, results) => {
           if (err) {
             console.log(err);
@@ -148,8 +174,6 @@ async function updateDB() {
       .prompt(updateQuestions)
       .then(async (res) => {
         const newRoleId = await getRoleId(res.newRole);
-        console.log(res.employee);
-        console.log(res.newRole);
         db.query(`UPDATE employee SET role_id = ? WHERE CONCAT(first_name, " ", last_name) = ?`, [newRoleId, res.employee], (err, results) => {
           if (err) {
             console.log(err);
@@ -279,7 +303,6 @@ async function getManagerId(firstName, lastName) {
       if (err) {
         reject(err);
       }
-      console.log(results);
       const managerId = results[0].id;
       resolve(managerId);
     })
