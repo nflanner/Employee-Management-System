@@ -129,23 +129,60 @@ async function addToDB(choice) {
   }
 }
 
-const updateQuestions = [
-  {
-    type: 'list',
-    message: 'Which employee\'s role would you like to update?',
-    name: 'employee',
-    choices: names,
-  },
-  {
-    type: 'list',
-    message: 'Which role would you like to assign the selected employee?',
-    name: 'newRole',
-    choices: roles,
-  },
-];
-
 async function updateDB() {
-  const 
+  const names = await getEmployeeNames();
+  const roles = await getRoles();
+  const updateQuestions = [
+    {
+      type: 'list',
+      message: 'Which employee\'s role would you like to update?',
+      name: 'employee',
+      choices: names,
+    },
+    {
+      type: 'list',
+      message: 'Which role would you like to assign the selected employee?',
+      name: 'newRole',
+      choices: roles,
+    },
+  ];
+  await inquirer
+      .prompt(updateQuestions)
+      .then(async (res) => {
+        const newRoleId = await getRoleId(res.newRole);
+        console.log(res.employee);
+        console.log(res.newRole);
+        db.query(`UPDATE employee SET role_id = ? WHERE CONCAT(first_name, " ", last_name) = ?`, [newRoleId, res.employee], (err, results) => {
+          if (err) {
+            console.log(err);
+          }
+        })
+        console.log(`${res.employee}'s role changed in the database.`);
+      });
+}
+
+async function getEmployeeNames() {
+  return new Promise(function(resolve, reject) {
+    db.query('SELECT CONCAT(first_name, " ", last_name) AS full_name FROM employee', function (err, results) {
+      if (err) {
+        reject(err)
+      }
+      const names = results.map(object => object.full_name);
+      resolve(names)
+    })
+  })
+}
+
+async function getRoles() {
+  return new Promise(function(resolve, reject) {
+    db.query('SELECT title FROM employee_role', function (err, results) {
+      if (err) {
+        reject(err)
+      }
+      const roles = results.map(object => object.title);
+      resolve(roles)
+    })
+  })
 }
 
 async function getEmployeeQuestions(employeeList) {
